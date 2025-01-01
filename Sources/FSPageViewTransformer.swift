@@ -246,11 +246,11 @@ open class FSPagerViewTransformer: NSObject {
                 return 0
             }
             return pagerView.itemSize.width * -self.minimumScale * 0.6
-        case .linear:
-            guard scrollDirection == .horizontal else {
-                return 0
-            }
-            return pagerView.itemSize.width * -self.minimumScale * 0.2
+        // case .linear:
+        //     guard scrollDirection == .horizontal else {
+        //         return 0
+        //     }
+        //     return pagerView.itemSize.width * -self.minimumScale * 0.2
         case .coverFlow:
             guard scrollDirection == .horizontal else {
                 return 0
