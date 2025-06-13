@@ -157,8 +157,9 @@ class FSPagerViewLayout: UICollectionViewLayout {
         func calculateTargetOffset(by proposedOffset: CGFloat, boundedOffset: CGFloat) -> CGFloat {
             var targetOffset: CGFloat
             if pagerView.decelerationDistance == FSPagerView.automaticDistance {
-                if abs(velocity.x) >= 0.3 {
-                    let vector: CGFloat = velocity.x >= 0 ? 1.0 : -1.0
+                let newVelocity = self.scrollDirection == .vertical ? velocity.y : velocity.x
+                if abs(newVelocity) >= 0.3 {
+                    let vector: CGFloat = newVelocity >= 0 ? 1.0 : -1.0
                     targetOffset = round(proposedOffset/self.itemSpacing+0.35*vector) * self.itemSpacing // Ceil by 0.15, rather than 0.5
                 } else {
                     targetOffset = round(proposedOffset/self.itemSpacing) * self.itemSpacing
