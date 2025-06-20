@@ -152,49 +152,79 @@ class FSPagerViewLayout: UICollectionViewLayout {
         guard let collectionView = self.collectionView, let pagerView = self.pagerView else {
             return proposedContentOffset
         }
-        var proposedContentOffset = proposedContentOffset
         
-        func calculateTargetOffset(by proposedOffset: CGFloat, boundedOffset: CGFloat) -> CGFloat {
-            var targetOffset: CGFloat
-            if pagerView.decelerationDistance == FSPagerView.automaticDistance {
-                let newVelocity = self.scrollDirection == .vertical ? velocity.y : velocity.x
-                if abs(newVelocity) >= 0.3 {
-                    let vector: CGFloat = newVelocity >= 0 ? 1.0 : -1.0
-                    targetOffset = round(proposedOffset/self.itemSpacing+0.35*vector) * self.itemSpacing // Ceil by 0.15, rather than 0.5
+        if pagerView.isSinglePagingEnable {
+            let proposedContentOffsetX: CGFloat = {
+                if self.scrollDirection == .vertical {
+                    return proposedContentOffset.x
+                }
+                let currentPage = round(collectionView.contentOffset.x / self.itemSpacing)
+                let direction: CGFloat = velocity.x > 0 ? 1 : -1
+                let nextPage = currentPage + direction
+                let targetOffset = nextPage * self.itemSpacing
+                let boundedOffset = collectionView.contentSize.width - self.itemSpacing
+                return min(max(0, targetOffset), boundedOffset)
+            }()
+            
+            let proposedContentOffsetY: CGFloat = {
+                if self.scrollDirection == .horizontal {
+                    return proposedContentOffset.y
+                }
+                let currentPage = round(collectionView.contentOffset.y / self.itemSpacing)
+                let direction: CGFloat = velocity.y > 0 ? 1 : -1
+                let nextPage = currentPage + direction
+                let targetOffset = nextPage * self.itemSpacing
+                let boundedOffset = collectionView.contentSize.height - self.itemSpacing
+                return min(max(0, targetOffset), boundedOffset)
+            }()
+            
+            return CGPoint(x: proposedContentOffsetX, y: proposedContentOffsetY)
+        } else {
+            
+            var proposedContentOffset = proposedContentOffset
+            
+            func calculateTargetOffset(by proposedOffset: CGFloat, boundedOffset: CGFloat) -> CGFloat {
+                var targetOffset: CGFloat
+                if pagerView.decelerationDistance == FSPagerView.automaticDistance {
+                    let newVelocity = self.scrollDirection == .vertical ? velocity.y : velocity.x
+                    if abs(newVelocity) >= 0.3 {
+                        let vector: CGFloat = newVelocity >= 0 ? 1.0 : -1.0
+                        targetOffset = round(proposedOffset/self.itemSpacing+0.35*vector) * self.itemSpacing // Ceil by 0.15, rather than 0.5
+                    } else {
+                        targetOffset = round(proposedOffset/self.itemSpacing) * self.itemSpacing
+                    }
                 } else {
-                    targetOffset = round(proposedOffset/self.itemSpacing) * self.itemSpacing
+                    let extraDistance = max(pagerView.decelerationDistance-1, 0)
+                    switch velocity.x {
+                    case 0.3 ... CGFloat.greatestFiniteMagnitude:
+                        targetOffset = ceil(collectionView.contentOffset.x/self.itemSpacing+CGFloat(extraDistance)) * self.itemSpacing
+                    case -CGFloat.greatestFiniteMagnitude ... -0.3:
+                        targetOffset = floor(collectionView.contentOffset.x/self.itemSpacing-CGFloat(extraDistance)) * self.itemSpacing
+                    default:
+                        targetOffset = round(proposedOffset/self.itemSpacing) * self.itemSpacing
+                    }
                 }
-            } else {
-                let extraDistance = max(pagerView.decelerationDistance-1, 0)
-                switch velocity.x {
-                case 0.3 ... CGFloat.greatestFiniteMagnitude:
-                    targetOffset = ceil(collectionView.contentOffset.x/self.itemSpacing+CGFloat(extraDistance)) * self.itemSpacing
-                case -CGFloat.greatestFiniteMagnitude ... -0.3:
-                    targetOffset = floor(collectionView.contentOffset.x/self.itemSpacing-CGFloat(extraDistance)) * self.itemSpacing
-                default:
-                    targetOffset = round(proposedOffset/self.itemSpacing) * self.itemSpacing
-                }
+                targetOffset = max(0, targetOffset)
+                targetOffset = min(boundedOffset, targetOffset)
+                return targetOffset
             }
-            targetOffset = max(0, targetOffset)
-            targetOffset = min(boundedOffset, targetOffset)
-            return targetOffset
+            let proposedContentOffsetX: CGFloat = {
+                if self.scrollDirection == .vertical {
+                    return proposedContentOffset.x
+                }
+                let boundedOffset = collectionView.contentSize.width-self.itemSpacing
+                return calculateTargetOffset(by: proposedContentOffset.x, boundedOffset: boundedOffset)
+            }()
+            let proposedContentOffsetY: CGFloat = {
+                if self.scrollDirection == .horizontal {
+                    return proposedContentOffset.y
+                }
+                let boundedOffset = collectionView.contentSize.height-self.itemSpacing
+                return calculateTargetOffset(by: proposedContentOffset.y, boundedOffset: boundedOffset)
+            }()
+            proposedContentOffset = CGPoint(x: proposedContentOffsetX, y: proposedContentOffsetY)
+            return proposedContentOffset
         }
-        let proposedContentOffsetX: CGFloat = {
-            if self.scrollDirection == .vertical {
-                return proposedContentOffset.x
-            }
-            let boundedOffset = collectionView.contentSize.width-self.itemSpacing
-            return calculateTargetOffset(by: proposedContentOffset.x, boundedOffset: boundedOffset)
-        }()
-        let proposedContentOffsetY: CGFloat = {
-            if self.scrollDirection == .horizontal {
-                return proposedContentOffset.y
-            }
-            let boundedOffset = collectionView.contentSize.height-self.itemSpacing
-            return calculateTargetOffset(by: proposedContentOffset.y, boundedOffset: boundedOffset)
-        }()
-        proposedContentOffset = CGPoint(x: proposedContentOffsetX, y: proposedContentOffsetY)
-        return proposedContentOffset
     }
     
     // MARK:- Internal functions
