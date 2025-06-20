@@ -139,6 +139,14 @@ open class FSPagerView: UIView,UICollectionViewDataSource,UICollectionViewDelega
         set { self.collectionView.isScrollEnabled = newValue }
         get { return self.collectionView.isScrollEnabled }
     }
+
+    /// FSPagerView uses the custom scrolling offset function if true.   
+    @IBInspectable
+    open var isSinglePagingEnable: Bool = false {
+        didSet {
+            self.collectionView.reloadData()
+        }
+    }
     
     /// A Boolean value that controls whether the pager view bounces past the edge of content and back again.
     @IBInspectable
